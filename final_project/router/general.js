@@ -3,6 +3,7 @@ let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
+const axios = require('axios');
 
 
 public_users.post("/register", (req,res) => {
@@ -92,6 +93,101 @@ public_users.get('/review/:isbn',function (req, res) {
     console.error('Error getting book review:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
+});
+
+// Get list of books using Promise callbacks or async-await (Task 10)
+
+const getAllBooksFromDatabase = async () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(books);
+    }, 1000);
+  });
+};
+
+public_users.get('/books', async (req, res) => {
+  try {
+    const books = await getAllBooksFromDatabase();
+    res.json({ books });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+// Get book details by isbn (Task 11)
+
+const getBookDetailsByISBNPromise = (isbn) => {
+  return new Promise((resolve, reject) => {
+    axios.get(`https://localhost:5000/books/isbn/${isbn}`)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+};
+
+public_users.get('/isbn/:isbn', (req, res) => {
+  const isbn = req.params.isbn;
+
+  getBookDetailsByISBNPromise(isbn)
+    .then(bookDetails => {
+      res.json({ bookDetails });
+    })
+    .catch(error => {
+      res.status(500).json({ error: 'Internal Server Error' });
+    });
+});
+
+// Get the book details based on Author using Promise callbacks with Axios. (Task 12)
+
+const getBooksByAuthorPromise = (author) => {
+  return new Promise((resolve, reject) => {
+    axios.get(`https://localhost:5000/books/author/${author}`)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+};
+
+public_users.get('/author/:author', (req, res) => {
+  const author = req.params.author;
+
+  getBooksByAuthorPromise(author)
+    .then(authorBooks => {
+      res.json({ authorBooks });
+    })
+    .catch(error => {
+      res.status(404).json(error);
+    });
+});
+//get the book details based on Title using Promise callbacks with Axios. (Task 13)
+
+const getBooksByTitlePromise = (title) => {
+  return new Promise((resolve, reject) => {
+    axios.get(`https://localhost:5000/books/title/${title}`)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+};
+
+public_users.get('/title/:title', (req, res) => {
+  const title = req.params.title;
+
+  getBooksByTitlePromise(title)
+    .then(titleBooks => {
+      res.json({ titleBooks });
+    })
+    .catch(error => {
+      res.status(404).json(error);
+    });
 });
 
 module.exports.general = public_users;
