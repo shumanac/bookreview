@@ -47,16 +47,52 @@ regd_users.post("/login", (req,res) => {
 });
 
 // Add a book review
+
+var  bookReviews = [];
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  if (req.body.review){
-    books[req.body.review] = {
-        "review":req.body.review,
-    
-        }
-}
-res.send("The review" + (' ')+ (req.body.review) + " Has been added!");
+ 
+  try {
+    const isbn = req.params.isbn;
+    const { review } = req.body;
+    const existingReviewIndex = bookReviews.findIndex((item) => item.isbn === isbn);
+
+    if (existingReviewIndex !== -1) {
+      bookReviews[existingReviewIndex].review = review;
+      return res.status(200).json({ message: 'Review updated successfully' });
+    }
+
+    bookReviews.push({ isbn, review });
+
+    return res.status(200).json({ message: 'Review added successfully' });
+  } catch (error) {
+    console.error('Error adding book review:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
 });
 
+//delete a book review
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+ 
+  try {
+    const isbnToDelete = req.params.isbn;
+   
+
+    // Find the index of the review with the provided ISBN
+    const reviewIndex = bookReviews.findIndex((review) => review.isbn === isbnToDelete);
+
+    if (reviewIndex !== -1) {
+      // If the review is found, remove it from the array
+      bookReviews.splice(reviewIndex, 1);
+      return res.status(200).json({ message: 'Review deleted successfully' });
+    } else {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting book review:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+
+});
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
 module.exports.users = users;
